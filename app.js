@@ -3,6 +3,7 @@
  * Module dependencies.
  */
 
+var Factory = require('./factory.js').Factory;
 var form = require('connect-form');
 var express = require('express');
 var routes = require('./routes');
@@ -30,10 +31,14 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
-// Routes
+// Start the hub factory.
+var factory = new Factory();
 
+// Routes
 app.get('/', routes.index);
-app.post('/subscribe', routes.subscribe);
+app.post('/subscribe', function onSubscribe(res, req) {
+  routes.subscribe(res, req, factory);
+});
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);

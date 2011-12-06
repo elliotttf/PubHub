@@ -7,19 +7,29 @@ var querystring = require('querystring');
 var url = require('url');
 var uuid = require('node-uuid');
 
-exports.subscribe = function(req, res) {
+exports.subscribe = function(req, res, factory) {
   console.log('Incoming request.');
   if (req.form) {
     req.form.complete(function(err, fields, files) {
-      respond(fields, res);
+      respond(fields, res, factory);
     });
   }
   else {
-    respond(params.body, res);
+    respond(params.body, res, factory);
   }
 };
 
-function respond(fields, res) {
+/**
+ * Handles the actual response to a subscription request.
+ *
+ * @param {object} fields
+ *   The POST fields we consumed.
+ * @param {object} res
+ *   The response object.
+ * @param {object} factory
+ *   The hub factory to add/remove the subscription to/from.
+ */
+function respond(fields, res, factory) {
   // Ensure the required fields exist.
   var valid = true;
   var message = 'Invalid request';
@@ -76,11 +86,19 @@ function respond(fields, res) {
         res.send('Unable to verify, server responded with ' + verifyRes.statusCode, 401);
       }
       else {
-        // TODO - save the subscriptions.
-        console.log('Verified new subscription to %s for %s', fields['hub.topic'], fields['hub.callback']);
+        // Save the subscriptions.
+        console.log(
+          'Verified new subscription to %s for %s',
+          fields['hub.topic'],
+          fields['hub.callback']
+        );
+        factory.subscribe(query);
 
         if (fields['hub.verify'] === 'sync') {
           res.send('', 204);
+        }
+        else {
+          // TODO - respond async.
         }
       }
     });
