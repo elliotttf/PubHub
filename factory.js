@@ -4,11 +4,12 @@
 
 var events = require('events');
 var mongoose = require('mongoose');
-var Model = require('../models/models.js');
-var subscriber = Model.Subscriber;
-var subscription = Model.Subscription;
+var Model = require('./models/models.js');
 var PubHub = require('./lib/pubhub.js').PubHub;
+var subscriber = mongoose.model('Subscriber', Model.Subscriber);
+var subscription = mongoose.model('Subscription', Model.Subscription);
 var Subscription = require('./lib/subscription.js').Subscription;
+var util = require('util');
 
 /**
  * @constructor
@@ -17,9 +18,13 @@ function Factory() {
   var self = this;
   events.EventEmitter.call(self);
   self.hubs = [];
+  self.subscription = new subscription();
 
   // Connect to the db and load up all of the existing hubs.
   self.db = mongoose.connect('mongodb://localhost/pubhub');
+  mongoose.connection.on('error', function(err) {
+    self.emit('error', err);
+  });
   subscription.find({}, function onFind(err, docs) {
     if (err) {
       self.emit('error', err);
@@ -35,7 +40,7 @@ function Factory() {
     }
   });
 }
-util.inherits(Factory, events.eventEmitter);
+util.inherits(Factory, events.EventEmitter);
 
 /**
  * Stop all hubs.
@@ -90,7 +95,7 @@ Factory.prototype.subscribe = function(sub) {
 
   // Add a new hub if we didn't find an existing one.
   if (!found && sub.hub_mode === 'subscribe') {
-    var newSubscription = new subscription(sub.hub_topic, newSubscriber);
+    var newSubscription = new Subscription(sub.hub_topic, newSubscriber);
     newSubscription.on('loaded', function onLoaded(message) {
       newSubscription.save();
     });

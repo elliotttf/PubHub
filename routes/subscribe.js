@@ -92,7 +92,6 @@ function respond(fields, res, factory) {
           fields['hub.topic'],
           fields['hub.callback']
         );
-        factory.subscribe(query);
 
         if (fields['hub.verify'] === 'sync') {
           res.send('', 204);
@@ -100,6 +99,9 @@ function respond(fields, res, factory) {
         else {
           // TODO - respond async.
         }
+
+        // Add the subscription to the factory.
+        factory.subscribe(query);
       }
     });
   });
