@@ -21,20 +21,19 @@ function Factory() {
   self.subscription = new subscription();
 
   // Connect to the db and load up all of the existing hubs.
-  self.db = mongoose.connect('mongodb://localhost/pubhub');
-  mongoose.connection.on('error', function(err) {
-    self.emit('error', err);
-  });
   subscription.find({}, function onFind(err, docs) {
     if (err) {
       self.emit('error', err);
       return;
     }
     for (var x in docs) {
-      var sub = new Subscription(docs.feed);
+      var sub = new Subscription(docs[x].feed);
       sub.on('loaded', function onLoaded(message) {
         var hub = new PubHub(sub);
         hub.listen();
+        hub.on('changed', function onChanged(data) {
+          hub.publish();
+        });
         self.hubs.push(hub);
       });
     }
@@ -81,12 +80,12 @@ Factory.prototype.subscribe = function(sub) {
   // Check to see if a hub already exists for this feed.
   // TODO - improve this search.
   for (var x in self.hubs) {
-    if (self.hubs.Subscriber.feed === sub.hub_topic) {
+    if (self.hubs[x].Subscriber.feed === sub.hub_topic) {
       if (sub.hub_mode === 'subscribe') {
-        self.hubs.Subscriber.addSubscriber(newSubscriber);
+        self.hubs[x].Subscriber.addSubscriber(newSubscriber);
       }
       else {
-        self.hubs.Subscriber.removeSubscriber(newSubscriber.callback);
+        self.hubs[x].Subscriber.removeSubscriber(newSubscriber.callback);
       }
       found = true;
       break;
@@ -102,6 +101,9 @@ Factory.prototype.subscribe = function(sub) {
     newSubscription.on('saved', function onSaved(message) {
       var newHub = new PubHub(newSubscription);
       newHub.listen();
+      newHub.on('changed', function onChanged(data) {
+        newHub.publish();
+      });
       self.hubs.push(newHub);
     });
   }

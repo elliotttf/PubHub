@@ -7,15 +7,15 @@ var querystring = require('querystring');
 var url = require('url');
 var uuid = require('node-uuid');
 
-exports.subscribe = function(req, res, factory) {
+exports.subscribe = function(req, res, subscribeEvents) {
   console.log('Incoming request.');
   if (req.form) {
     req.form.complete(function(err, fields, files) {
-      respond(fields, res, factory);
+      respond(fields, res, subscribeEvents);
     });
   }
   else {
-    respond(params.body, res, factory);
+    respond(params.body, res, subscribeEvents);
   }
 };
 
@@ -26,10 +26,10 @@ exports.subscribe = function(req, res, factory) {
  *   The POST fields we consumed.
  * @param {object} res
  *   The response object.
- * @param {object} factory
- *   The hub factory to add/remove the subscription to/from.
+ * @param {EventEmitter} subscribeEvents
+ *   An event emitter to notify the factory of events.
  */
-function respond(fields, res, factory) {
+function respond(fields, res, subscribeEvents) {
   // Ensure the required fields exist.
   var valid = true;
   var message = 'Invalid request';
@@ -100,8 +100,11 @@ function respond(fields, res, factory) {
           // TODO - respond async.
         }
 
-        // Add the subscription to the factory.
-        factory.subscribe(query);
+        // Explicitly set the callback before we save the data locally.
+        query.hub_callback = fields['hub.callback'];
+
+        // Notify the factory that we have an incoming subscription.
+        subscribeEvents.emit('subscribed', query);
       }
     });
   });
