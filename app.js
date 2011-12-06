@@ -5,7 +5,9 @@
 
 var Factory = require('./factory.js').Factory;
 var form = require('connect-form');
+var events = require('events');
 var express = require('express');
+var mongoose = require('mongoose');
 var routes = require('./routes');
 
 var app = module.exports = express.createServer(
@@ -32,12 +34,20 @@ app.configure('production', function(){
 });
 
 // Start the hub factory.
+mongoose.connect('mongodb://localhost/pubhub');
+mongoose.connection.on('error', function(err) {
+  console.error(err);
+});
 var factory = new Factory();
+var subscribeEvents = new events.EventEmitter();
+subscribeEvents.on('subscribed', function onSubscribed(query) {
+  factory.subscribe(query);
+});
 
 // Routes
 app.get('/', routes.index);
 app.post('/subscribe', function onSubscribe(res, req) {
-  routes.subscribe(res, req, factory);
+  routes.subscribe(res, req, subscribeEvents);
 });
 
 app.listen(3000);

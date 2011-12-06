@@ -12,7 +12,11 @@ var Schema = mongoose.Schema;
  * @see http://pubsubhubbub.googlecode.com/svn/trunk/pubsubhubbub-core-0.3.html#anchor5
  */
 exports.Subscriber = new Schema({
-  'callback': String,      // The subscriber callback URL.
+  'callback': {            // The subscriber callback URL.
+    'type': String,
+    'required': true,
+    'unique': true
+  },
   'created': Number,       // Timestamp.
   'lease_seconds': Number, // Lease lifetime.
   'secret': String,        // Secret for HMAC digest.
