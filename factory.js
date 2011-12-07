@@ -9,6 +9,7 @@ var PubHub = require('./lib/pubhub.js').PubHub;
 var subscriber = mongoose.model('Subscriber', Model.Subscriber);
 var subscription = mongoose.model('Subscription', Model.Subscription);
 var Subscription = require('./lib/subscription.js').Subscription;
+var url = require('url');
 var util = require('util');
 
 /**
@@ -80,12 +81,12 @@ Factory.prototype.subscribe = function(sub) {
   // Check to see if a hub already exists for this feed.
   // TODO - improve this search.
   for (var x in self.hubs) {
-    if (self.hubs[x].Subscriber.feed === sub.hub_topic) {
+    if (url.format(self.hubs[x].feed) === sub.hub_topic) {
       if (sub.hub_mode === 'subscribe') {
-        self.hubs[x].Subscriber.addSubscriber(newSubscriber);
+        self.hubs[x].Subscription.addSubscriber(newSubscriber);
       }
       else {
-        self.hubs[x].Subscriber.removeSubscriber(newSubscriber.callback);
+        self.hubs[x].Subscription.removeSubscriber(newSubscriber.callback);
       }
       found = true;
       break;
