@@ -33,6 +33,7 @@ function Factory() {
         var hub = new PubHub(sub);
         hub.listen();
         hub.on('changed', function onChanged(data) {
+          hub.Subscription.updateData(data);
           hub.publish();
         });
         self.hubs.push(hub);
