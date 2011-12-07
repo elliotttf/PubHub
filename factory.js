@@ -105,6 +105,7 @@ Factory.prototype.subscribe = function(sub) {
       var newHub = new PubHub(newSubscription);
       newHub.listen();
       newHub.on('changed', function onChanged(data) {
+        newHub.Subscription.updateData(data);
         newHub.publish();
       });
       self.hubs.push(newHub);
