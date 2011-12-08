@@ -30,14 +30,13 @@ function Factory() {
     for (var x in docs) {
       var sub = new Subscription(docs[x].feed);
       sub.on('loaded', function onLoaded(loadedSub) {
-        sub.Subscriber = loadedSub;
-        var hub = new PubHub(sub);
-        hub.listen();
-        hub.on('changed', function onChanged(data) {
-          hub.Subscription.updateData(data);
-          hub.publish();
+        var hub = new PubHub(loadedSub);
+        var index = (self.hubs.push(hub) - 1);
+        self.hubs[index].listen();
+        self.hubs[index].on('changed', function onChanged(data) {
+          self.hubs[index].Subscription.updateData(data);
+          self.hubs[index].publish();
         });
-        self.hubs.push(hub);
       });
     }
   });
@@ -98,15 +97,15 @@ Factory.prototype.subscribe = function(sub) {
   // Add a new hub if we didn't find an existing one.
   if (!found && sub.hub_mode === 'subscribe') {
     var newSubscription = new Subscription(sub.hub_topic, newSubscriber);
-    newSubscription.on('loaded', function onLoaded(message) {
-      newSubscription.save();
-      var newHub = new PubHub(newSubscription);
-      newHub.listen();
-      newHub.on('changed', function onChanged(data) {
-        newHub.Subscription.updateData(data);
-        newHub.publish();
+    newSubscription.on('loaded', function onLoaded(loadedSub) {
+      loadedSub.save();
+      var newHub = new PubHub(loadedSub);
+      var index = (self.hubs.push(newHub) - 1);
+      self.hubs[index].listen();
+      self.hubs[index].on('changed', function onChanged(data) {
+        self.hubs[index].Subscription.updateData(data);
+        self.hubs[index].publish();
       });
-      self.hubs.push(newHub);
     });
   }
 };
