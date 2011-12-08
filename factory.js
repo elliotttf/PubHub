@@ -83,7 +83,7 @@ Factory.prototype.subscribe = function(sub) {
   // Check to see if a hub already exists for this feed.
   // TODO - improve this search.
   for (var x in self.hubs) {
-    if (url.format(self.hubs[x].getFeed()) === sub.hub_topic) {
+    if (self.hubs[x].getFeed() === sub.hub_topic) {
       if (sub.hub_mode === 'subscribe') {
         self.hubs[x].Subscription.addSubscriber(newSubscriber);
       }
@@ -100,8 +100,6 @@ Factory.prototype.subscribe = function(sub) {
     var newSubscription = new Subscription(sub.hub_topic, newSubscriber);
     newSubscription.on('loaded', function onLoaded(message) {
       newSubscription.save();
-    });
-    newSubscription.on('saved', function onSaved(message) {
       var newHub = new PubHub(newSubscription);
       newHub.listen();
       newHub.on('changed', function onChanged(data) {

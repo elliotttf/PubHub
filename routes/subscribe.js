@@ -80,10 +80,12 @@ function respond(fields, res, subscribeEvents) {
       if (verifyRes.statusCode < 200 || verifyRes.statusCode > 299) {
         console.error('Unable to verify, server responded with %d', verifyRes.statusCode);
         res.send('Unable to verify, server responded with ' + verifyRes.statusCode, 401);
+        return;
       }
       if (data != query['hub_challenge']) {
         console.error('Unable to verify, %s does not match %s', data, query['hub_challenge']);
         res.send('Unable to verify, server responded with ' + verifyRes.statusCode, 401);
+        return;
       }
       else {
         // Save the subscriptions.
