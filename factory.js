@@ -35,7 +35,7 @@ function Factory() {
         self.hubs[index].listen();
         self.hubs[index].on('changed', function onChanged(data) {
           self.hubs[index].Subscription.updateData(data);
-          self.hubs[index].publish();
+          self.hubs[index].publish(data);
         });
       });
     }
@@ -104,7 +104,7 @@ Factory.prototype.subscribe = function(sub) {
       self.hubs[index].listen();
       self.hubs[index].on('changed', function onChanged(data) {
         self.hubs[index].Subscription.updateData(data);
-        self.hubs[index].publish();
+        self.hubs[index].publish(data);
       });
     });
   }

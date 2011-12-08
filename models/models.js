@@ -37,6 +37,6 @@ exports.Subscription = new Schema({
     'type': Number,
     'index': true
   },
-  'data': String,                      // Content of feed.
+  'data': String,                      // MD5 hash of feed.
   'contentType': String                // Content type header.
 });
