@@ -3,6 +3,7 @@
  */
 
 var http = require('http');
+var https = require('https');
 var querystring = require('querystring');
 var url = require('url');
 var uuid = require('node-uuid');
@@ -69,7 +70,13 @@ function respond(fields, res, subscribeEvents) {
     query['hub_verify_token'] = fields['hub.verify_token'];
   }
   var options = url.parse(fields['hub.callback'] + '?' + querystring.stringify(query));
-  http.get(options, function onReq(verifyRes) {
+
+  var re = /^https.+/
+  var method = http;
+  if (re.test(options.protocol)) {
+    method = https;
+  }
+  method.get(options, function onReq(verifyRes) {
     console.log('Verifying intent.');
     var data = '';
     verifyRes.on('data', function onData(chunk) {
