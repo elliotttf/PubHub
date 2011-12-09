@@ -8,6 +8,16 @@ var querystring = require('querystring');
 var url = require('url');
 var uuid = require('node-uuid');
 
+/**
+ * Exports the subscribe route.
+ *
+ * @param {object} req
+ *   The request object.
+ * @param {object} res
+ *   The response object.
+ * @param {EventEmitter} subscribeEvents
+ *   EventEmitter used to notify the factory of new subscription requests.
+ */
 exports.subscribe = function(req, res, subscribeEvents) {
   console.log('Incoming request.');
   if (req.form) {
@@ -29,8 +39,12 @@ exports.subscribe = function(req, res, subscribeEvents) {
  *   The response object.
  * @param {EventEmitter} subscribeEvents
  *   An event emitter to notify the factory of events.
+ * @param {int} retryCount
+ *   Number of times the verification process has been retried.
+ *   Defaults to 0.
  */
-function respond(fields, res, subscribeEvents) {
+function respond(fields, res, subscribeEvents, retryCount) {
+  retryCount = (typeof retryCount === 'undefined') ? 0 : retryCount;
   // Ensure the required fields exist.
   var valid = true;
   var message = 'Invalid request';
@@ -52,7 +66,7 @@ function respond(fields, res, subscribeEvents) {
     return;
   }
 
-  if (fields['hub.verify'] === 'async') {
+  if (fields['hub.verify'] === 'async' && retryCount === 0) {
     // Respond that we got it.
     res.send('Accepted', 202);
   }
@@ -61,7 +75,7 @@ function respond(fields, res, subscribeEvents) {
   var query = {
     'hub_mode': fields['hub.mode'],
     'hub_topic': fields['hub.topic'],
-    'hub_challenge': uuid.v4(),
+    'hub_challenge': uuid.v4()
   };
   if (typeof fields['hub.lease_seconds'] !== 'undefined') {
     query['hub_lease_seconds'] = fields['hub.lease_seconds'];
@@ -69,9 +83,11 @@ function respond(fields, res, subscribeEvents) {
   if (typeof fields['hub.verify_token'] !== 'undefined') {
     query['hub_verify_token'] = fields['hub.verify_token'];
   }
-  var options = url.parse(fields['hub.callback'] + '?' + querystring.stringify(query));
+  var options = url.parse(
+    fields['hub.callback'] + '?' + querystring.stringify(query)
+  );
 
-  var re = /^https.+/
+  var re = /^https.+/;
   var method = http;
   if (re.test(options.protocol)) {
     method = https;
@@ -85,13 +101,46 @@ function respond(fields, res, subscribeEvents) {
 
     verifyRes.on('end', function onEnd() {
       if (verifyRes.statusCode < 200 || verifyRes.statusCode > 299) {
-        console.error('Unable to verify, server responded with %d', verifyRes.statusCode);
-        res.send('Unable to verify, server responded with ' + verifyRes.statusCode, 401);
+        console.error(
+          'Unable to verify, server responded with %d',
+          verifyRes.statusCode
+        );
+        if (retryCount === 0) {
+          res.send(
+            'Unable to verify, server responded with ' + verifyRes.statusCode,
+            401
+          );
+        }
+
+        // Retry in ten seconds if we haven't retried more than 10 times.
+        if (retryCount < 10) {
+          setTimeout(
+            function retryFailed() {
+              console.log(
+                'Retrying intent verification for %s',
+                fields['hub.callback']
+              );
+              retryCount++;
+              respond(fields, res, subscribeEvents, retryCount);
+            },
+            10000
+          );
+        }
+
         return;
       }
       if (data != query['hub_challenge']) {
-        console.error('Unable to verify, %s does not match %s', data, query['hub_challenge']);
-        res.send('Unable to verify, server responded with ' + verifyRes.statusCode, 401);
+        console.error(
+          'Unable to verify, %s does not match %s',
+          data,
+          query['hub_challenge']
+        );
+        if (retryCount === 0) {
+          res.send(
+            'Unable to verify, server responded with ' + verifyRes.statusCode,
+            401
+          );
+        }
         return;
       }
       else {
@@ -102,7 +151,7 @@ function respond(fields, res, subscribeEvents) {
           fields['hub.callback']
         );
 
-        if (fields['hub.verify'] === 'sync') {
+        if (fields['hub.verify'] === 'sync' && retryCount === 0) {
           res.send('', 204);
         }
         else {
@@ -117,5 +166,5 @@ function respond(fields, res, subscribeEvents) {
       }
     });
   });
-};
+}
 
