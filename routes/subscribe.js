@@ -39,12 +39,8 @@ exports.subscribe = function(req, res, subscribeEvents) {
  *   The response object.
  * @param {EventEmitter} subscribeEvents
  *   An event emitter to notify the factory of events.
- * @param {int} retryCount
- *   Number of times the verification process has been retried.
- *   Defaults to 0.
  */
-function respond(fields, res, subscribeEvents, retryCount) {
-  retryCount = (typeof retryCount === 'undefined') ? 0 : retryCount;
+function respond(fields, res, subscribeEvents) {
   // Ensure the required fields exist.
   var valid = true;
   var message = 'Invalid request';
@@ -66,7 +62,7 @@ function respond(fields, res, subscribeEvents, retryCount) {
     return;
   }
 
-  if (fields['hub.verify'] === 'async' && retryCount === 0) {
+  if (fields['hub.verify'] === 'async') {
     // Respond that we got it.
     res.send('Accepted', 202);
   }
@@ -105,28 +101,10 @@ function respond(fields, res, subscribeEvents, retryCount) {
           'Unable to verify, server responded with %d',
           verifyRes.statusCode
         );
-        if (retryCount === 0) {
-          res.send(
-            'Unable to verify, server responded with ' + verifyRes.statusCode,
-            401
-          );
-        }
-
-        // Retry in ten seconds if we haven't retried more than 10 times.
-        if (retryCount < 10) {
-          setTimeout(
-            function retryFailed() {
-              console.log(
-                'Retrying intent verification for %s',
-                fields['hub.callback']
-              );
-              retryCount++;
-              respond(fields, res, subscribeEvents, retryCount);
-            },
-            10000
-          );
-        }
-
+        res.send(
+          'Unable to verify, server responded with ' + verifyRes.statusCode,
+          401
+        );
         return;
       }
       if (data != query['hub_challenge']) {
@@ -135,12 +113,10 @@ function respond(fields, res, subscribeEvents, retryCount) {
           data,
           query['hub_challenge']
         );
-        if (retryCount === 0) {
-          res.send(
-            'Unable to verify, server responded with ' + verifyRes.statusCode,
-            401
-          );
-        }
+        res.send(
+          'Unable to verify, server responded with ' + verifyRes.statusCode,
+          401
+        );
         return;
       }
       else {
@@ -151,7 +127,7 @@ function respond(fields, res, subscribeEvents, retryCount) {
           fields['hub.callback']
         );
 
-        if (fields['hub.verify'] === 'sync' && retryCount === 0) {
+        if (fields['hub.verify'] === 'sync') {
           res.send('', 204);
         }
         else {

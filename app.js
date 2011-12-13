@@ -46,6 +46,9 @@ subscribeEvents.on('subscribed', function onSubscribed(query) {
 
 // Routes
 app.get('/', routes.index);
+app.get('/subscribe', function onGet(req, res) {
+  res.send('Only POST subscriptions are supported.');
+});
 app.post('/subscribe', function onSubscribe(res, req) {
   routes.subscribe(res, req, subscribeEvents);
 });
