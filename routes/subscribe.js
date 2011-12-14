@@ -15,18 +15,18 @@ var uuid = require('node-uuid');
  *   The request object.
  * @param {object} res
  *   The response object.
- * @param {EventEmitter} subscribeEvents
+ * @param {EventEmitter} hubEvents
  *   EventEmitter used to notify the factory of new subscription requests.
  */
-exports.subscribe = function(req, res, subscribeEvents) {
+exports.subscribe = function(req, res, hubEvents) {
   console.log('Incoming request.');
   if (req.form) {
     req.form.complete(function(err, fields, files) {
-      respond(fields, res, subscribeEvents);
+      respond(fields, res, hubEvents);
     });
   }
   else {
-    respond(params.body, res, subscribeEvents);
+    respond(params.body, res, hubEvents);
   }
 };
 
@@ -37,10 +37,10 @@ exports.subscribe = function(req, res, subscribeEvents) {
  *   The POST fields we consumed.
  * @param {object} res
  *   The response object.
- * @param {EventEmitter} subscribeEvents
+ * @param {EventEmitter} hubEvents
  *   An event emitter to notify the factory of events.
  */
-function respond(fields, res, subscribeEvents) {
+function respond(fields, res, hubEvents) {
   // Ensure the required fields exist.
   var valid = true;
   var message = 'Invalid request';
@@ -138,7 +138,7 @@ function respond(fields, res, subscribeEvents) {
         query.hub_callback = fields['hub.callback'];
 
         // Notify the factory that we have an incoming subscription.
-        subscribeEvents.emit('subscribed', query);
+        hubEvents.emit('subscribed', query);
       }
     });
   });

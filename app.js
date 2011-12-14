@@ -26,11 +26,11 @@ app.configure(function(){
 });
 
 app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
 app.configure('production', function(){
-  app.use(express.errorHandler()); 
+  app.use(express.errorHandler());
 });
 
 // Start the hub factory.
@@ -39,9 +39,12 @@ mongoose.connection.on('error', function(err) {
   console.error(err);
 });
 var factory = new Factory();
-var subscribeEvents = new events.EventEmitter();
-subscribeEvents.on('subscribed', function onSubscribed(query) {
+var hubEvents = new events.EventEmitter();
+hubEvents.on('subscribed', function onSubscribed(query) {
   factory.subscribe(query);
+});
+hubEvents.on('published', function onPublished(feed) {
+  factory.publish(feed);
 });
 
 // Routes
@@ -49,8 +52,11 @@ app.get('/', routes.index);
 app.get('/subscribe', function onGet(req, res) {
   res.send('Only POST subscriptions are supported.');
 });
-app.post('/subscribe', function onSubscribe(res, req) {
-  routes.subscribe(res, req, subscribeEvents);
+app.post('/subscribe', function onSubscribe(req, res) {
+  routes.subscribe(req, res, hubEvents);
+});
+app.post('/publish', function onPublish(req, res) {
+  routes.publish(req, res, hubEvents);
 });
 
 app.listen(3000);

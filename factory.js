@@ -111,6 +111,29 @@ Factory.prototype.subscribe = function(sub) {
 };
 
 /**
+ * Handles a publish notification.
+ *
+ * @param {string} url
+ *   The feed URL that notified us of new content.
+ */
+Factory.prototype.publish = function(url) {
+  var self = this;
+
+  // Find the feed that's being published.
+  // TODO - improve this search.
+  for (var x in self.hubs) {
+    if (self.hubs[x].getFeed() === url) {
+      var options = self.hubs[x].getFeed(true);
+      options.headers = {
+        'User-Agent': 'PubHub (https://github.com/elliotttf/PubHub)'
+      };
+      self.hubs[x].fetch(options);
+      break;
+    }
+  }
+};
+
+/**
  * Exports the factory class.
  */
 exports.Factory = Factory;

@@ -8,3 +8,5 @@ exports.index = function(req, res){
 
 exports.subscribe = require('./subscribe.js').subscribe;
 
+exports.publish = require('./publish.js').publish;
+
