@@ -38,5 +38,7 @@ exports.Subscription = new Schema({
     'index': true
   },
   'data': String,                      // MD5 hash of feed.
-  'contentType': String                // Content type header.
+  'contentType': String,               // Content type header.
+  'push': Boolean                      // Does the feed support push notifications?
 });
+

@@ -98,6 +98,7 @@ Factory.prototype.subscribe = function(sub) {
   if (!found && sub.hub_mode === 'subscribe') {
     var newSubscription = new Subscription(sub.hub_topic, newSubscriber);
     newSubscription.on('loaded', function onLoaded(loadedSub) {
+      loadedSub.supportsPush();
       loadedSub.save();
       var newHub = new PubHub(loadedSub);
       var index = (self.hubs.push(newHub) - 1);
