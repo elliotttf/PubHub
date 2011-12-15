@@ -20,7 +20,7 @@ exports.publish = function(req, res, hubEvents) {
     });
   }
   else {
-    respond(params.body, res, hubEvents);
+    respond(req.body, res, hubEvents);
   }
 };
 
