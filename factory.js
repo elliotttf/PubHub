@@ -32,7 +32,9 @@ function Factory() {
       sub.on('loaded', function onLoaded(loadedSub) {
         var hub = new PubHub(loadedSub);
         var index = (self.hubs.push(hub) - 1);
-        self.hubs[index].listen();
+        if (!self.hubs[index].Subscription.Subscription.publish) {
+          self.hubs[index].listen();
+        }
         self.hubs[index].on('changed', function onChanged(data) {
           self.hubs[index].Subscription.updateData(data);
           self.hubs[index].publish(data);
@@ -101,6 +103,7 @@ Factory.prototype.subscribe = function(sub) {
       loadedSub.save();
       var newHub = new PubHub(loadedSub);
       var index = (self.hubs.push(newHub) - 1);
+      // We always start with a polling model until the source publishes to us.
       self.hubs[index].listen();
       self.hubs[index].on('changed', function onChanged(data) {
         self.hubs[index].Subscription.updateData(data);
@@ -127,6 +130,16 @@ Factory.prototype.publish = function(url) {
       options.headers = {
         'User-Agent': 'PubHub (https://github.com/elliotttf/PubHub)'
       };
+
+      // Update the subscription if we didn't know this feed could publish.
+      if (!self.hubs[x].Subscription.Subscription.publish) {
+        self.hubs[x].Subscription.Subscription.publish = true;
+        self.hubs[x].Subscription.save();
+
+        // Stop polling since we know the feed can talk to us now.
+        self.hubs[x].stop();
+      }
+
       self.hubs[x].fetch(options);
       break;
     }
