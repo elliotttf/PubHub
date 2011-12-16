@@ -43,15 +43,23 @@ function Model(client, schema) {
       break;
     }
   }
+
+  return Redis.compile(client, this);
 }
 
-Model.prototype.save = function(callback) {
+function Redis(client, schema) {
+  this.client = client;
+  this.schema = schema;
+}
+
+
+Redis.prototype.save = function(callback) {
   var self = this;
   var json = JSON.stringify(self);
-  self.client.hset(self.key, 'value', json, callback);
+  self.client.hset(self.schema.key, 'value', json, callback);
 };
 
-Model.prototype.update = function(conditions, query, options, callback) {
+Redis.prototype.update = function(conditions, query, options, callback) {
   var self = this;
   if (typeof options === 'function') {
     callback = options;
@@ -62,15 +70,15 @@ Model.prototype.update = function(conditions, query, options, callback) {
     }
   }
   var json = JSON.stringify(self);
-  self.client.hset(self.key, 'value', json, callback);
+  self.client.hset(self.schema.key, 'value', json, callback);
 };
 
-Model.prototype.remove = function(conditions, callback) {
+Redis.prototype.remove = function(conditions, callback) {
   var self = this;
-  self.client.hdel(self.key, callback);
+  self.client.hdel(self.schema.key, callback);
 };
 
-Model.prototype.find = function(conditions, callback) {
+Redis.prototype.find = function(conditions, callback) {
   var self = this;
   self.client.keys('*', function allKeys(err, keys) {
     var docs = [];
@@ -84,15 +92,26 @@ Model.prototype.find = function(conditions, callback) {
   });
 }
 
-Model.prototype.findOne = function(conditions, callback) {
+Redis.prototype.findOne = function(conditions, callback) {
   var self = this
-  if (typeof conditions[self.key] === 'undefined') {
+  if (typeof conditions[self.schema.key] === 'undefined') {
     throw 'Cannot find without using the key.';
   }
 
-  self.client.hget(conditions[self.key], 'value', function onGet(err, doc) {
+  self.client.hget(conditions[self.schema.key], 'value', function onGet(err, doc) {
     callback(err, doc);
   });
+};
+
+Redis.compile = function(client, schema) {
+  function redis() {
+    Redis.apply(this, arguments);
+  }
+
+  redis.__proto__ = Redis;
+  redis.prototype.__proto__ = Redis.prototype;
+
+  return redis;
 };
 
 exports.Model = Model;
