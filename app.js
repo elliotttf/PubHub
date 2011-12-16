@@ -3,12 +3,13 @@
  * Module dependencies.
  */
 
-var Factory = require('./factory.js').Factory;
-var form = require('connect-form');
+var db = require('./models').db;
 var events = require('events');
 var express = require('express');
-var mongoose = require('mongoose');
+var Factory = require('./factory.js').Factory;
+var form = require('connect-form');
 var routes = require('./routes');
+var settings = require('./util/settings');
 
 var app = module.exports = express.createServer(
   form({ keepExtensions: true })
@@ -34,10 +35,7 @@ app.configure('production', function(){
 });
 
 // Start the hub factory.
-mongoose.connect('mongodb://localhost/pubhub');
-mongoose.connection.on('error', function(err) {
-  console.error(err);
-});
+db.connect(settings.database);
 var factory = new Factory();
 var hubEvents = new events.EventEmitter();
 hubEvents.on('subscribed', function onSubscribed(query) {

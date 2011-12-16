@@ -1,0 +1,8 @@
+{
+  "database": {
+    "url": "mongodb://localhost/pubhub",
+    "host": "localhost",
+    "port": "6379",
+    "type": "mongodb"
+  }
+}

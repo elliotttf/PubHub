@@ -3,11 +3,9 @@
  */
 
 var events = require('events');
-var mongoose = require('mongoose');
-var Model = require('./models/models.js');
 var PubHub = require('./lib/pubhub.js').PubHub;
-var subscriber = mongoose.model('Subscriber', Model.Subscriber);
-var subscription = mongoose.model('Subscription', Model.Subscription);
+var subscriber = require('./models').Subscriber;
+var subscription = require('./models').Subscription;
 var Subscription = require('./lib/subscription.js').Subscription;
 var url = require('url');
 var util = require('util');

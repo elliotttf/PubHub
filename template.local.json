@@ -1,0 +1,8 @@
+{
+  "database": {
+    "connection": "mongodb://localhost/pubhub",
+    "type": "mongodb",
+    "port": 27017,
+    "name": "pubhub"
+  }
+}
