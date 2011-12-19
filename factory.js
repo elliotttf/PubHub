@@ -2,6 +2,7 @@
  * @fileoverview Manages all of the current subscriptions.
  */
 
+var db = require('./models').db;
 var events = require('events');
 var PubHub = require('./lib/pubhub.js').PubHub;
 var subscriber = require('./models').Subscriber;
@@ -20,7 +21,7 @@ function Factory() {
   self.subscription = new subscription();
 
   // Connect to the db and load up all of the existing hubs.
-  subscription.find({}, function onFind(err, docs) {
+  db.find(subscription, {}, function onFind(err, docs) {
     if (err) {
       self.emit('error', err);
       return;
