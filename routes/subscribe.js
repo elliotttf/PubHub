@@ -137,6 +137,10 @@ function respond(fields, res, hubEvents) {
         // Explicitly set the callback before we save the data locally.
         query.hub_callback = fields['hub.callback'];
 
+        if (typeof fields['hub.secret'] !== 'undefined') {
+          query.hub_secret = fields['hub.secret'];
+        }
+
         // Notify the factory that we have an incoming subscription.
         hubEvents.emit('subscribed', query);
       }
