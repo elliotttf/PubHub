@@ -144,6 +144,10 @@ function respond(fields, res, hubEvents) {
         // Notify the factory that we have an incoming subscription.
         hubEvents.emit('subscribed', query);
       }
+
+      // Explicitly null out these variables to plug a memory leak.
+      verifyRes = null;
+      query = null;
     });
   });
 }
