@@ -148,6 +148,7 @@ function respond(fields, res, hubEvents) {
       // Explicitly null out these variables to plug a memory leak.
       verifyRes = null;
       query = null;
+      res = null;
     });
   });
 }
