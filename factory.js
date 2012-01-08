@@ -147,7 +147,17 @@ Factory.prototype.publish = function(url) {
   }
 };
 
-/**
- * Exports the factory class.
- */
-exports.Factory = Factory;
+// Start the factory!
+mongoose.connect('mongodb://localhost/pubhub');
+mongoose.connection.on('error', function(err) {
+    console.error(err);
+});
+var factory = new Factory();
+process.on('message', function(m) {
+  if (typeof m.subscribed !== 'undefined') {
+    factory.subscribe(m.subscribed);
+  }
+  else if (typeof m.published !== 'undefined') {
+    factory.publish(m.published);
+  }
+});
