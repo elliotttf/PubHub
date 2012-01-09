@@ -36,8 +36,12 @@ function Factory() {
           self.hubs[index].listen();
         }
         self.hubs[index].on('changed', function onChanged(data) {
+          self.hubs[index].stop();
           self.hubs[index].Subscription.updateData(data);
           self.hubs[index].publish(data);
+        });
+        self.hubs[index].on('published', function published(msg) {
+          self.hubs[index].listen();
         });
       });
     }
@@ -107,8 +111,12 @@ Factory.prototype.subscribe = function(sub) {
       // We always start with a polling model until the source publishes to us.
       self.hubs[index].listen();
       self.hubs[index].on('changed', function onChanged(data) {
+        self.hubs[index].stop();
         self.hubs[index].Subscription.updateData(data);
         self.hubs[index].publish(data);
+      });
+      self.hubs[index].on('published', function published(msg) {
+        self.hubs[index].listen();
       });
     });
   }
