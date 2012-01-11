@@ -42,6 +42,13 @@ hubEvents.on('published', function onPublished(feed) {
   factory.send({ 'published': feed });
 });
 
+// If the factory died, we should die too!
+// We assume that any exit of the factory is unexpected.
+factory.on('exit', function seppuku(code, signal) {
+  console.log('Factory died unexpectedly!');
+  process.exit(1);
+});
+
 // Routes
 app.get('/', routes.index);
 app.get('/subscribe', function onGet(req, res) {
