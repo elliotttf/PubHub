@@ -34,6 +34,12 @@ app.configure('production', function(){
 
 // Start the hub factory.
 var factory = cp.fork('./factory.js');
+function killFactory(signal) {
+  factory.removeAllListeners('exit');
+  factory.kill(signal);
+  process.exit();
+}
+
 var hubEvents = new events.EventEmitter();
 hubEvents.on('subscribed', function onSubscribed(query) {
   factory.send({ 'subscribed': query });
@@ -47,6 +53,20 @@ hubEvents.on('published', function onPublished(feed) {
 factory.on('exit', function seppuku(code, signal) {
   console.log('Factory died unexpectedly!');
   process.exit(1);
+});
+
+// Kill the factory if we're exiting.
+process.on('SIGHUP', function onSIGHUP() {
+  killFactory('SIGHUP');
+});
+process.on('SIGINT', function onSIGINT() {
+  killFactory('SIGINT');
+});
+process.on('SIGKILL', function onSIGKILL() {
+  killFactory('SIGKILL');
+});
+process.on('SIGTERM', function onSIGTERM() {
+  killFactory('SIGTERM');
 });
 
 // Routes
