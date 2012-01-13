@@ -23,8 +23,8 @@ if (cluster.isMaster) {
   });
   var factory = new Factory();
 
-  // TODO - make this variable.
-  for (var i = 0; i < 1; i++) {
+  // Listen with no more processes than we have CPUs.
+  for (var i = 0; i < require('os').cpus().length; i++) {
     var worker = cluster.fork();
 
     worker.on('message', function onMessage(msg) {
