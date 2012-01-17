@@ -102,10 +102,11 @@ Factory.prototype.subscribe = function(sub) {
 
   // Add a new hub if we didn't find an existing one.
   if (!found && sub.hub_mode === 'subscribe') {
-    var newSubscription = new Subscription(sub.hub_topic, newSubscriber);
+    var newSubscription = new Subscription(sub.hub_topic);
     newSubscription.on('loaded', function onLoaded(loadedSub) {
       newSubscription = null;
-      loadedSub.save();
+      // Add the subscriber and save the subscription.
+      loadedSub.addSubscriber(newSubscriber);
       var newHub = new PubHub(loadedSub);
       var index = (self.hubs.push(newHub) - 1);
       // We always start with a polling model until the source publishes to us.
