@@ -14,25 +14,29 @@ var Factory = require('./factory.js').Factory;
 var form = require('connect-form');
 var mongoose = require('mongoose');
 var routes = require('./routes');
+var subscriber = mongoose.model('Subscriber', Models.Subscriber);
+
+mongoose.connect('mongodb://localhost/pubhub');
+mongoose.connection.on('error', function(err) {
+  console.error(err);
+});
 
 if (cluster.isMaster) {
-  // Start the factory!
-  mongoose.connect('mongodb://localhost/pubhub');
-  mongoose.connection.on('error', function(err) {
-      console.error(err);
-  });
-  var factory = new Factory();
+  var cpus = require('os').cpus().length;
 
-  // Listen with no more processes than we have CPUs.
-  for (var i = 0; i < require('os').cpus().length; i++) {
+  // TODO - select all the existing subscriptions and assign them
+  // to a CPU for processing.
+
+  // Create no more processes than we have CPUs.
+  for (var i = 0; i < cpus; i++) {
     var worker = cluster.fork();
 
     worker.on('message', function onMessage(msg) {
-      if (msg.query) {
-        factory.subscribe(msg.query);
+      // TODO - figure out which worker is actually handling this.
+      // if it's a new subscription, just pick one.
+      if (msg.subscribe) {
       }
-      else if (msg.feed) {
-        factory.publish(msg.feed);
+      else if (msg.publish) {
       }
     });
   }
@@ -65,12 +69,16 @@ else  {
     app.use(express.errorHandler());
   });
 
+  // Start the factory!
+  var factory = new Factory();
+
   var hubEvents = new events.EventEmitter();
+  // TODO - figure out if we can handle this, or if it needs to be routed.
   hubEvents.on('subscribed', function onSubscribed(query) {
-    process.send({ 'query': query });
+    process.send({ 'subscribe': query });
   });
   hubEvents.on('published', function onPublished(feed) {
-    process.send({ 'feed': feed });
+    process.send({ 'publish': feed });
   });
 
   // Routes
@@ -86,5 +94,14 @@ else  {
   });
 
   app.listen(3000);
+
+  process.on('message', function onMessage(msg) {
+    if (msg.subscribe) {
+      factory.subscribe(msg.subscribe);
+    }
+    else if (msg.publish) {
+      factory.publish(msg.publish)
+    }
+  });
 }
 
