@@ -1,85 +1,90 @@
+/**
+ * @fileoverview Base for PubHub.
+ */
 
 /**
  * Module dependencies.
  */
 
+var cluster = require('cluster');
 var cp = require('child_process');
-var form = require('connect-form');
 var events = require('events');
 var express = require('express');
+var Factory = require('./factory.js').Factory;
+var form = require('connect-form');
+var mongoose = require('mongoose');
 var routes = require('./routes');
 
-var app = module.exports = express.createServer(
-  form({ keepExtensions: true })
-);
+if (cluster.isMaster) {
+  // Start the factory!
+  mongoose.connect('mongodb://localhost/pubhub');
+  mongoose.connection.on('error', function(err) {
+      console.error(err);
+  });
+  var factory = new Factory();
 
-// Configuration
+  // Listen with no more processes than we have CPUs.
+  for (var i = 0; i < require('os').cpus().length; i++) {
+    var worker = cluster.fork();
 
-app.configure(function(){
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
-});
+    worker.on('message', function onMessage(msg) {
+      if (msg.query) {
+        factory.subscribe(msg.query);
+      }
+      else if (msg.feed) {
+        factory.publish(msg.feed);
+      }
+    });
+  }
 
-app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-});
+  cluster.on('death', function onDeath(worker) {
+    console.log('Worker ' + worker.pid + ' died. Restarting.');
+    cluster.fork();
+  });
+}
+else  {
+  var app = module.exports = express.createServer(
+    form({ keepExtensions: true })
+  );
 
-app.configure('production', function(){
-  app.use(express.errorHandler());
-});
+  // Configuration
+  app.configure(function() {
+    app.set('views', __dirname + '/views');
+    app.set('view engine', 'jade');
+    app.use(express.bodyParser());
+    app.use(express.methodOverride());
+    app.use(app.router);
+    app.use(express.static(__dirname + '/public'));
+  });
 
-// Start the hub factory.
-var factory = cp.fork('./factory.js');
-function killFactory(signal) {
-  factory.removeAllListeners('exit');
-  factory.kill(signal);
-  process.exit();
+  app.configure('development', function(){
+    app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+  });
+
+  app.configure('production', function(){
+    app.use(express.errorHandler());
+  });
+
+  var hubEvents = new events.EventEmitter();
+  hubEvents.on('subscribed', function onSubscribed(query) {
+    process.send({ 'query': query });
+  });
+  hubEvents.on('published', function onPublished(feed) {
+    process.send({ 'feed': feed });
+  });
+
+  // Routes
+  app.get('/', routes.index);
+  app.get('/subscribe', function onGet(req, res) {
+    res.send('Only POST subscriptions are supported.');
+  });
+  app.post('/subscribe', function onSubscribe(req, res) {
+    routes.subscribe(req, res, hubEvents);
+  });
+  app.post('/publish', function onPublish(req, res) {
+    routes.publish(req, res, hubEvents);
+  });
+
+  app.listen(3000);
 }
 
-var hubEvents = new events.EventEmitter();
-hubEvents.on('subscribed', function onSubscribed(query) {
-  factory.send({ 'subscribed': query });
-});
-hubEvents.on('published', function onPublished(feed) {
-  factory.send({ 'published': feed });
-});
-
-// If the factory died, we should die too!
-// We assume that any exit of the factory is unexpected.
-factory.on('exit', function seppuku(code, signal) {
-  console.log('Factory died unexpectedly!');
-  process.exit(1);
-});
-
-// Kill the factory if we're exiting.
-process.on('SIGHUP', function onSIGHUP() {
-  killFactory('SIGHUP');
-});
-process.on('SIGINT', function onSIGINT() {
-  killFactory('SIGINT');
-});
-process.on('SIGKILL', function onSIGKILL() {
-  killFactory('SIGKILL');
-});
-process.on('SIGTERM', function onSIGTERM() {
-  killFactory('SIGTERM');
-});
-
-// Routes
-app.get('/', routes.index);
-app.get('/subscribe', function onGet(req, res) {
-  res.send('Only POST subscriptions are supported.');
-});
-app.post('/subscribe', function onSubscribe(req, res) {
-  routes.subscribe(req, res, hubEvents);
-});
-app.post('/publish', function onPublish(req, res) {
-  routes.publish(req, res, hubEvents);
-});
-
-app.listen(3000);
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
