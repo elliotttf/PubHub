@@ -87,7 +87,7 @@ Factory.prototype.stop = function() {
 Factory.prototype.subscribe = function(sub) {
   var self = this;
   var found = false;
-  var newSubscriber = new subscriber();
+  var newSubscriber = {};
   newSubscriber.callback = sub.hub_callback;
   newSubscriber.lease_seconds = sub.hub_lease_seconds;
   newSubscriber.created = Date.now();
@@ -149,8 +149,8 @@ Factory.prototype.publish = function(url) {
       };
 
       // Update the subscription if we didn't know this feed could publish.
-      if (!self.hubs[x].Subscription.Subscription.publish) {
-        self.hubs[x].Subscription.Subscription.publish = true;
+      if (!self.hubs[x].Subscription.Subscription.push) {
+        self.hubs[x].Subscription.Subscription.push = true;
         self.hubs[x].Subscription.save();
 
         // Stop polling since we know the feed can talk to us now.
@@ -164,3 +164,4 @@ Factory.prototype.publish = function(url) {
 };
 
 exports.Factory = Factory;
+
