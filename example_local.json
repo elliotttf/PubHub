@@ -1,0 +1,9 @@
+{
+  "database": {
+    "user": "foo",
+    "password": "bar",
+    "host": "localhost",
+    "port": "5673",
+    "database": "pubhub",
+  }
+}
