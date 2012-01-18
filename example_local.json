@@ -3,7 +3,7 @@
     "user": "foo",
     "password": "bar",
     "host": "localhost",
-    "port": "5673",
-    "database": "pubhub",
+    "port": "3306",
+    "database": "pubhub"
   }
 }

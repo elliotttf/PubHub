@@ -3,11 +3,8 @@
  */
 
 var events = require('events');
-var mongoose = require('mongoose');
-var Model = require('./models/models.js');
+var mysql = require('mysql');
 var PubHub = require('./lib/pubhub.js').PubHub;
-var subscriber = mongoose.model('Subscriber', Model.Subscriber);
-var subscription = mongoose.model('Subscription', Model.Subscription);
 var Subscription = require('./lib/subscription.js').Subscription;
 var url = require('url');
 var util = require('util');
@@ -18,11 +15,19 @@ var util = require('util');
 function Factory() {
   var self = this;
   events.EventEmitter.call(self);
+
+  // TODO - bail if this file doesn't exist.
+  var optionsFile = require('fs').readFileSync('./local.json', 'utf8');
+  self.options = JSON.parse(optionsFile);
+
+  // Create the MySQL client and connect to the database.
+  self.mysql = mysql.createClient(self.options.database);
+  self.mysql.useDatabase(self.options.database.database);
+
   self.hubs = [];
-  self.subscription = new subscription();
 
   // Connect to the db and load up all of the existing hubs.
-  subscription.find({}, function onFind(err, docs) {
+  self.mysql.query("SELECT feed FROM subscriptions", function onFind(err, docs, fields) {
     if (err) {
       self.emit('error', err);
       return;
@@ -45,6 +50,9 @@ function Factory() {
         });
       });
     }
+
+    // Close the MySQL connection since it's not used by us anymore.
+    self.mysql.end();
   });
 }
 util.inherits(Factory, events.EventEmitter);
