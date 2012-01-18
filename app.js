@@ -12,15 +12,10 @@ var events = require('events');
 var express = require('express');
 var Factory = require('./factory.js').Factory;
 var form = require('connect-form');
-var mongoose = require('mongoose');
 var routes = require('./routes');
 
 if (cluster.isMaster) {
   // Start the factory!
-  mongoose.connect('mongodb://localhost/pubhub');
-  mongoose.connection.on('error', function(err) {
-      console.error(err);
-  });
   var factory = new Factory();
 
   // Listen with no more processes than we have CPUs.

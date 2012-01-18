@@ -6,10 +6,23 @@ A node.js implementation of a PubSub hub which allows one to many communication:
 * one: the feed to subscribe to.
 * many: the subscribers to respond to.
 
+Dependencies
+------------
+
+This application requires MySQL as a persistant data store. To connect to the database copy the example\_local.json file to local.json and fill out the appropriate connection details.
+
 Installation
 ------------
 
-It's easiest to install PubHub with npm, the specific packages used are listed in the package.json file.
+It's easiest to install PubHub with npm:
+
+```
+npm install
+```
+
+The specific packages used are listed in the package.json file.
+
+Currently, you must manually create the MySQL database tables. See SCHEMA.md for the commands to do this.
 
 Running
 -------
