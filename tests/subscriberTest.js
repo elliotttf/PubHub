@@ -4,7 +4,6 @@
 
 var Subscription = require('../lib/subscription.js').Subscription;
 
-
 exports.subscriberTest = {
   'setUp': function(callback) {
     this.feed = 'https://github.com/elliotttf.atom';
