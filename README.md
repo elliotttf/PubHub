@@ -24,6 +24,8 @@ The specific packages used are listed in the package.json file.
 
 Currently, you must manually create the MySQL database tables. See SCHEMA.md for the commands to do this.
 
+After the database is created, copy example_local.json to local.json and fill out the appropriate connection settings.
+
 Running
 -------
 
