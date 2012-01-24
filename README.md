@@ -32,3 +32,5 @@ Running
 ```
 node app.js
 ```
+
+The server listens on port 3000 by default. You can add subscriptions by sending Pubsubhubbub subscribe requests to $HOST:3000/subscribe.
