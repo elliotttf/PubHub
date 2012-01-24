@@ -21,13 +21,13 @@ function Factory() {
   self.options = JSON.parse(optionsFile);
 
   // Create the MySQL client and connect to the database.
-  self.mysql = mysql.createClient(self.options.database);
-  self.mysql.useDatabase(self.options.database.database);
+  var client = mysql.createClient(self.options.database);
+  client.useDatabase(self.options.database.database);
 
   self.hubs = [];
 
   // Connect to the db and load up all of the existing hubs.
-  self.mysql.query("SELECT feed FROM subscriptions", function onFind(err, docs, fields) {
+  client.query("SELECT feed FROM subscriptions", function onFind(err, docs, fields) {
     if (err) {
       self.emit('error', err);
       return;
@@ -51,9 +51,9 @@ function Factory() {
       });
     }
 
-    // Close the MySQL connection since it's not used by us anymore.
-    self.mysql.end();
   });
+  // Close the MySQL connection since it's not used by us anymore.
+  client.end();
 }
 util.inherits(Factory, events.EventEmitter);
 
