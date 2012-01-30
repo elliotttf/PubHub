@@ -33,22 +33,7 @@ function Factory() {
       return;
     }
     for (var x in docs) {
-      var sub = new Subscription(docs[x].feed);
-      sub.on('loaded', function onLoaded(loadedSub) {
-        var hub = new PubHub(loadedSub);
-        var index = (self.hubs.push(hub) - 1);
-        if (!self.hubs[index].Subscription.Subscription.publish) {
-          self.hubs[index].listen();
-        }
-        self.hubs[index].on('changed', function onChanged(data) {
-          self.hubs[index].stop();
-          self.hubs[index].Subscription.updateData(data);
-          self.hubs[index].publish(data);
-        });
-        self.hubs[index].on('published', function published(msg) {
-          self.hubs[index].listen();
-        });
-      });
+      self.addHub(docs[x].feed, null, false);
     }
 
   });
@@ -110,23 +95,7 @@ Factory.prototype.subscribe = function(sub) {
 
   // Add a new hub if we didn't find an existing one.
   if (!found && sub.hub_mode === 'subscribe') {
-    var newSubscription = new Subscription(sub.hub_topic, newSubscriber);
-    newSubscription.on('loaded', function onLoaded(loadedSub) {
-      newSubscription = null;
-      loadedSub.save();
-      var newHub = new PubHub(loadedSub);
-      var index = (self.hubs.push(newHub) - 1);
-      // We always start with a polling model until the source publishes to us.
-      self.hubs[index].listen();
-      self.hubs[index].on('changed', function onChanged(data) {
-        self.hubs[index].stop();
-        self.hubs[index].Subscription.updateData(data);
-        self.hubs[index].publish(data);
-      });
-      self.hubs[index].on('published', function published(msg) {
-        self.hubs[index].listen();
-      });
-    });
+    self.addHub(sub.hub_topic, newSubscriber);
   }
 };
 
@@ -138,11 +107,13 @@ Factory.prototype.subscribe = function(sub) {
  */
 Factory.prototype.publish = function(url) {
   var self = this;
+  var found = false;
 
   // Find the feed that's being published.
   // TODO - improve this search.
   for (var x in self.hubs) {
     if (self.hubs[x].getFeed() === url) {
+      found = true;
       var options = self.hubs[x].getFeed(true);
       options.headers = {
         'User-Agent': 'PubHub (https://github.com/elliotttf/PubHub)'
@@ -161,6 +132,56 @@ Factory.prototype.publish = function(url) {
       break;
     }
   }
+
+  // If the feed wasn't found, add an empty feed with no subscribers,
+  // we'll notify subscribers when they come in.
+  if (!found) {
+    self.addHub(url);
+  }
+};
+
+/**
+ * Adds a new hub to the list.
+ *
+ * @param {string} url
+ *   The feed url.
+ * @param {object} sub
+ *   (optional) A subscriber object for this feed.
+ * @param {boolean} save
+ *   (optional) true if the subscription should be saved after it is loaded.
+ *
+ * @see Subscription().
+ */
+Factory.prototype.addHub = function(url, sub, save) {
+  var self = this;
+
+  if (typeof sub !== 'undefined' && sub !== null) {
+    var newSubscription = new Subscription(url, sub);
+  }
+  else {
+    var newSubscription = new Subscription(url);
+  }
+
+  newSubscription.on('loaded', function onLoaded(loadedSub) {
+    newSubscription = null;
+
+    if (typeof save === 'undefined' || save === true) {
+      loadedSub.save();
+    }
+
+    var newHub = new PubHub(loadedSub);
+    var index = (self.hubs.push(newHub) - 1);
+    // We always start with a polling model until the source publishes to us.
+    self.hubs[index].listen();
+    self.hubs[index].on('changed', function onChanged(data) {
+      self.hubs[index].stop();
+      self.hubs[index].Subscription.updateData(data);
+      self.hubs[index].publish(data);
+    });
+    self.hubs[index].on('published', function published(msg) {
+      self.hubs[index].listen();
+    });
+  });
 };
 
 exports.Factory = Factory;
