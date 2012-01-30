@@ -15,6 +15,18 @@ var form = require('connect-form');
 var routes = require('./routes');
 
 if (cluster.isMaster) {
+  // Make sure the options file is present.
+  try {
+    require('fs').statSync('./local.json');
+  }
+  catch (error) {
+    console.error(
+      'You must create a local.json file with database configuration ' +
+      'options. See example_local.json for an example.'
+    );
+    process.exit(1);
+  }
+
   // Start the factory!
   var factory = new Factory();
 
