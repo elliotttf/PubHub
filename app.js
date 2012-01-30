@@ -80,6 +80,13 @@ else  {
     routes.publish(req, res, hubEvents);
   });
 
-  app.listen(3000);
+  var optionsFile = require('fs').readFileSync('./local.json', 'utf8');
+  var options = JSON.parse(optionsFile);
+  var port = 3000;
+  if (typeof options.port !== 'undefined') {
+    port = options.port;
+  }
+
+  app.listen(port);
 }
 
