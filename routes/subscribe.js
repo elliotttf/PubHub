@@ -88,7 +88,7 @@ function respond(fields, res, hubEvents) {
   if (re.test(options.protocol)) {
     method = https;
   }
-  method.get(options, function onReq(verifyRes) {
+  var vReq = method.get(options, function onReq(verifyRes) {
     console.log('Verifying intent.');
     var data = '';
     verifyRes.on('data', function onData(chunk) {
@@ -153,6 +153,11 @@ function respond(fields, res, hubEvents) {
       valid = null;
       verifyRes = null;
     });
+  });
+
+  vReq.on('error', function onVerifyError(err) {
+    console.error("There was a problem verifying the subscriber's intent.");
+    console.error(err);
   });
 }
 
