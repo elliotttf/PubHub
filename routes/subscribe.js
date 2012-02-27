@@ -80,7 +80,7 @@ function respond(fields, res, hubEvents) {
     query['hub_verify_token'] = fields['hub.verify_token'];
   }
 
-  if (/\?/.exec(fields['hub.callback'])) {
+  if (/\?/.test(fields['hub.callback'])) {
     var options = url.parse(
       fields['hub.callback'] + '&' + querystring.stringify(query)
     );
