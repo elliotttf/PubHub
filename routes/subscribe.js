@@ -79,9 +79,17 @@ function respond(fields, res, hubEvents) {
   if (typeof fields['hub.verify_token'] !== 'undefined') {
     query['hub_verify_token'] = fields['hub.verify_token'];
   }
-  var options = url.parse(
-    fields['hub.callback'] + '?' + querystring.stringify(query)
-  );
+
+  if (/\?/.exec(fields['hub.callback'])) {
+    var options = url.parse(
+      fields['hub.callback'] + '&' + querystring.stringify(query)
+    );
+  }
+  else {
+    var options = url.parse(
+      fields['hub.callback'] + '?' + querystring.stringify(query)
+    );
+  }
 
   var re = /^https.+/;
   var method = http;
