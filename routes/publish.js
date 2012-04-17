@@ -2,6 +2,8 @@
  * @fileoverview handles publish notifications from feeds.
  */
 
+var util = require('util');
+
 /**
  * Exports the publish route.
  *
@@ -13,7 +15,7 @@
  *   Event emitter to notify the factory with.
  */
 exports.publish = function(req, res, hubEvents) {
-  console.log('Incoming publish notification.');
+  util.log('Incoming publish notification.');
   if (req.form) {
     req.form.complete(function(err, fields, files) {
       respond(fields, res, hubEvents);

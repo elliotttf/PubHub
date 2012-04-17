@@ -13,6 +13,7 @@ var express = require('express');
 var Factory = require('./factory.js').Factory;
 var form = require('connect-form');
 var routes = require('./routes');
+var util = require('util');
 
 if (cluster.isMaster) {
   // Make sure the options file is present.
@@ -20,7 +21,7 @@ if (cluster.isMaster) {
     require('fs').statSync('./local.json');
   }
   catch (error) {
-    console.error(
+    util.log(
       'You must create a local.json file with database configuration ' +
       'options. See example_local.json for an example.'
     );
@@ -45,7 +46,7 @@ if (cluster.isMaster) {
   }
 
   cluster.on('death', function onDeath(worker) {
-    console.log('Worker ' + worker.pid + ' died. Restarting.');
+    util.log('Worker ' + worker.pid + ' died. Restarting.');
     cluster.fork();
   });
 }

@@ -6,6 +6,7 @@ var http = require('http');
 var https = require('https');
 var querystring = require('querystring');
 var url = require('url');
+var util = require('util');
 var uuid = require('node-uuid');
 
 /**
@@ -19,7 +20,7 @@ var uuid = require('node-uuid');
  *   EventEmitter used to notify the factory of new subscription requests.
  */
 exports.subscribe = function(req, res, hubEvents) {
-  console.log('Incoming request.');
+  util.log('Incoming request.');
   if (req.form) {
     req.form.complete(function(err, fields, files) {
       respond(fields, res, hubEvents);
@@ -97,7 +98,7 @@ function respond(fields, res, hubEvents) {
     method = https;
   }
   var vReq = method.get(options, function onReq(verifyRes) {
-    console.log('Verifying intent.');
+    util.log('Verifying intent.');
     var data = '';
     verifyRes.on('data', function onData(chunk) {
       data += chunk;
@@ -105,10 +106,10 @@ function respond(fields, res, hubEvents) {
 
     verifyRes.on('end', function onEnd() {
       if (verifyRes.statusCode < 200 || verifyRes.statusCode > 299) {
-        console.error(
+        util.log(util.format(
           'Unable to verify, server responded with %d',
           verifyRes.statusCode
-        );
+        ));
         res.send(
           'Unable to verify, server responded with ' + verifyRes.statusCode,
           401
@@ -116,11 +117,11 @@ function respond(fields, res, hubEvents) {
         return;
       }
       if (data != query['hub_challenge']) {
-        console.error(
+        util.log(util.format(
           'Unable to verify, %s does not match %s',
           data,
           query['hub_challenge']
-        );
+        ));
         res.send(
           'Unable to verify, server responded with ' + verifyRes.statusCode,
           401
@@ -129,11 +130,11 @@ function respond(fields, res, hubEvents) {
       }
       else {
         // Save the subscriptions.
-        console.log(
+        util.log(util.format(
           'Verified new subscription to %s for %s',
           fields['hub.topic'],
           fields['hub.callback']
-        );
+        ));
 
         if (fields['hub.verify'] === 'sync') {
           res.send('', 204);
@@ -164,8 +165,8 @@ function respond(fields, res, hubEvents) {
   });
 
   vReq.on('error', function onVerifyError(err) {
-    console.error("There was a problem verifying the subscriber's intent.");
-    console.error(err);
+    util.log("There was a problem verifying the subscriber's intent.");
+    util.log(err);
   });
 }
 
