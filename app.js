@@ -11,7 +11,6 @@ var cp = require('child_process');
 var events = require('events');
 var express = require('express');
 var Factory = require('./factory.js').Factory;
-var form = require('connect-form');
 var routes = require('./routes');
 var util = require('util');
 
@@ -51,9 +50,7 @@ if (cluster.isMaster) {
   });
 }
 else  {
-  var app = module.exports = express.createServer(
-    form({ keepExtensions: true })
-  );
+  var app = module.exports = express.createServer();
 
   // Configuration
   app.configure(function() {

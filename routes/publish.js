@@ -16,14 +16,7 @@ var util = require('util');
  */
 exports.publish = function(req, res, hubEvents) {
   util.log('Incoming publish notification.');
-  if (req.form) {
-    req.form.complete(function(err, fields, files) {
-      respond(fields, res, hubEvents);
-    });
-  }
-  else {
-    respond(req.body, res, hubEvents);
-  }
+  respond(req.body, res, hubEvents);
 };
 
 /**
