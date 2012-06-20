@@ -21,14 +21,7 @@ var uuid = require('node-uuid');
  */
 exports.subscribe = function(req, res, hubEvents) {
   util.log('Incoming request.');
-  if (req.form) {
-    req.form.complete(function(err, fields, files) {
-      respond(fields, res, hubEvents);
-    });
-  }
-  else {
-    respond(req.body, res, hubEvents);
-  }
+  respond(req.body, res, hubEvents);
 };
 
 /**
