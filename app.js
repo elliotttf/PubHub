@@ -34,6 +34,20 @@ if (cluster.isMaster) {
   for (var i = 0; i < require('os').cpus().length; i++) {
     var worker = cluster.fork();
 
+    // Backwards compatability, this might not be the cleanest way of doing this.
+    if (process.version < 'v0.7.0') {
+      worker.on('message', function onMessage(msg) {
+        if (msg.query) {
+          factory.subscribe(msg.query);
+        }
+        else if (msg.feed) {
+          factory.publish(msg.feed);
+        }
+      });
+    }
+  }
+
+  cluster.on('fork', function onFork(worker) {
     worker.on('message', function onMessage(msg) {
       if (msg.query) {
         factory.subscribe(msg.query);
@@ -42,12 +56,26 @@ if (cluster.isMaster) {
         factory.publish(msg.feed);
       }
     });
-  }
-
-  cluster.on('death', function onDeath(worker) {
-    util.log('Worker ' + worker.pid + ' died. Restarting.');
-    cluster.fork();
   });
+
+  var onDeath = function(worker) {
+    util.log('Worker ' + worker.pid + ' died. Restarting.');
+    var newWorker = cluster.fork();
+
+    // Backwards compatability.
+    if (process.version < 'v0.7.0') {
+      newWorker.on('message', function onMessage(msg) {
+        if (msg.query) {
+          factory.subscribe(msg.query);
+        }
+        else if (msg.feed) {
+          factory.publish(msg.feed);
+        }
+      });
+    }
+  }
+  cluster.on('death', onDeath);
+  cluster.on('exit', onDeath);
 }
 else  {
   var app = module.exports = express.createServer();
