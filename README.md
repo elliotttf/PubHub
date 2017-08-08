@@ -1,6 +1,8 @@
 PubHub
 ======
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/elliotttf/PubHub.svg)](https://greenkeeper.io/)
+
 A node.js implementation of a PubSub hub which allows one to many communication:
 
 * one: the feed to subscribe to.
